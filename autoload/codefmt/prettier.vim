@@ -87,8 +87,13 @@ function! codefmt#prettier#GetFormatter() abort
       let l:lines_start = join(l:lines[0 : a:startline - 1], "\n")
       call extend(l:cmd, ['--range-start', string(strchars(l:lines_start))])
     endif
-    let l:lines_end = join(l:lines[0 : a:endline - 1], "\n")
-    call extend(l:cmd, ['--range-end', string(strchars(l:lines_end))])
+    " Only pass --range-end for partial ranges: for a full-buffer format,
+    " prettier's range mode isn't implemented for every parser (e.g. YAML and
+    " Markdown), so a bare --range-end would silently make it a no-op.
+    if a:endline < line('$')
+      let l:lines_end = join(l:lines[0 : a:endline - 1], "\n")
+      call extend(l:cmd, ['--range-end', string(strchars(l:lines_end))])
+    endif
 
     call extend(l:cmd, codefmt#formatterhelpers#ResolveFlagToArray(
           \ 'prettier_options'))
